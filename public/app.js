@@ -1,4 +1,4 @@
-const API = window.DREAMCANVAS_API || "";
+const API = "https://1pigcr39tc.execute-api.us-east-1.amazonaws.com";
 const form = document.querySelector("#profile"),
   status = document.querySelector("#status"),
   stories = document.querySelector("#stories");
