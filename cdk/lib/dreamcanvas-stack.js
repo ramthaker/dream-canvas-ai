@@ -63,7 +63,7 @@ export class DreamCanvasStack extends cdk.Stack {
     });
     table.grantReadWriteData(apiFn);
     table.grantReadWriteData(storyFn);
-    images.grantRead(apiFn);
+    images.grantReadWrite(apiFn);
     images.grantReadWrite(storyFn);
     for (const fn of [apiFn, storyFn])
       fn.addToRolePolicy(
@@ -91,13 +91,7 @@ export class DreamCanvasStack extends cdk.Stack {
       ),
     });
     new events.Rule(this, "BedtimeSchedule", {
-      schedule: events.Schedule.cron({
-        minute: "0",
-        hour: "20",
-        weekDay: "*",
-        month: "*",
-        year: "*",
-      }),
+      schedule: events.Schedule.rate(cdk.Duration.minutes(15)),
       targets: [
         new targets.LambdaFunction(storyFn, {
           event: events.RuleTargetInput.fromObject({

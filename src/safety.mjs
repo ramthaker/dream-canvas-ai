@@ -15,6 +15,9 @@ export function safeProfile(x = {}) {
       .trim()
       .slice(0, 160),
     timezone: x.timezone || "Europe/Stockholm",
+    bedtime: /^([01]\\d|2[0-3]):[0-5]\\d$/.test(String(x.bedtime || ""))
+      ? String(x.bedtime)
+      : "20:00",
   };
 }
 export function isSafeStory(x) {

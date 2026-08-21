@@ -2,6 +2,18 @@ const API = "https://1pigcr39tc.execute-api.us-east-1.amazonaws.com";
 const form = document.querySelector("#profile"),
   status = document.querySelector("#status"),
   stories = document.querySelector("#stories");
+document.querySelector("#generate-now").addEventListener("click", async () => {
+  status.textContent = "Creating your test story…";
+  try {
+    const r = await fetch(`${API}/generate`, { method: "POST" });
+    if (!r.ok) throw Error();
+    status.textContent = "Test story created and emailed.";
+    await load();
+  } catch {
+    status.textContent =
+      "Save your profile first and verify the SES sender email.";
+  }
+});
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
   const data = Object.fromEntries(new FormData(form));

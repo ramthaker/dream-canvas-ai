@@ -15,6 +15,7 @@ test("safeProfile applies bedtime defaults and bounds age", () => {
     themes: "stars",
     email: "parent@example.com",
     timezone: "Europe/Stockholm",
+    bedtime: "20:00",
   });
 });
 

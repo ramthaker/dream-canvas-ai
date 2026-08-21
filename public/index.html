@@ -11,10 +11,15 @@
       <p class="eyebrow">DREAMCANVAS · AUTONOMOUS BEDTIME STORIES</p>
       <h1>A little story is waiting.</h1>
       <p class="lede">
-        You will receive a new illustrated bedtime story by email every evening at 8:00 PM Stockholm time.
+        You will receive a new illustrated bedtime story by email every evening
+        at 8:00 PM Stockholm time.
       </p>
       <section id="setup" class="card">
-        <h2>Make bedtime personal</h2><p class="promise">DreamCanvas creates a gentle story and illustration for your child, then sends it to your email before bedtime.</p>
+        <h2>Make bedtime personal</h2>
+        <p class="promise">
+          DreamCanvas creates a gentle story and illustration for your child,
+          then sends it to your email before bedtime.
+        </p>
         <form id="profile">
           <label>Child's first name<input name="childName" required /></label
           ><label
@@ -29,7 +34,17 @@
               name="themes"
               placeholder="moon, foxes, stars" /></label
           ><label>Your email<input name="email" type="email" required /></label
-          ><button>Save bedtime profile</button>
+          ><label
+            >Bedtime<input
+              name="bedtime"
+              type="time"
+              step="900"
+              value="20:00"
+              required /></label
+          ><button>Save bedtime profile</button
+          ><button type="button" id="generate-now">
+            Send a test story now
+          </button>
           <p id="status"></p>
         </form>
       </section>

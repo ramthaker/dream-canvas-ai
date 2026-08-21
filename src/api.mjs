@@ -6,6 +6,7 @@ import {
   QueryCommand,
 } from "@aws-sdk/lib-dynamodb";
 import { safeProfile } from "./safety.mjs";
+import { handler as generateStory } from "./generate-story.mjs";
 import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 const db = DynamoDBDocumentClient.from(new DynamoDBClient({})),
@@ -22,6 +23,12 @@ const out = (s, b) => ({
 export async function handler(e) {
   try {
     const method = e.requestContext?.http?.method || e.httpMethod || "GET";
+    const path = e.rawPath || e.path || "";
+    if (method === "POST" && path.endsWith("/generate")) {
+      return out(200, {
+        story: await generateStory({ source: "manual-test" }),
+      });
+    }
     if (method === "POST") {
       const p = safeProfile(JSON.parse(e.body || "{}"));
       if (!p.email) return out(400, { error: "A parent email is required." });
