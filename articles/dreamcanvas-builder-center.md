@@ -42,16 +42,6 @@ This illustration represents the bedtime experience DreamCanvas is designed to c
 
 After saving the profile, the parent can select “Send a test story now.” The API invokes the same story Lambda used by the autonomous workflow, but marks the request as a manual test so it does not wait for the selected bedtime. This gives the builder a fast way to verify Bedrock access, image handling, DynamoDB persistence, S3 storage, and SES delivery. In production, the recurring scheduler remains responsible for the normal evening story.
 
-## Deployment notes
+## Deploying your own copy
 
-The stack is deployed with AWS CDK using the `pulse-personal` profile. The frontend is hosted by AWS Amplify Hosting. The API is available through API Gateway, while the story and image assets remain in AWS-managed services. Before sharing the application, the SES sender and recipient should be verified when the account is still in the SES sandbox, and Bedrock model access should be enabled in the selected region.
-
-## Project links and challenge tag
-
-**Live app:** https://main.d2nitev0gdhlt2.amplifyapp.com/
-
-**Source repository:** https://github.com/ramthaker/dream-canvas-ai
-
-**Challenge tag:** #agents
-
-DreamCanvas is deployed using AWS Amplify Hosting, API Gateway, AWS Lambda, Amazon DynamoDB, Amazon S3, Amazon SES, Amazon Bedrock, and Amazon EventBridge. The live app demonstrates the reader experience, while the repository contains the CDK infrastructure, Lambda handlers, frontend, tests, architecture diagram, flow diagram, and this article.
+Anyone can deploy their own copy using AWS CDK and their own AWS account and profile. The frontend can be hosted with AWS Amplify Hosting, while the API, stories, and images remain in AWS-managed services. Before running the application, configure AWS credentials for the target account, verify the SES sender and recipient when the account is in the SES sandbox, and enable the required Amazon Bedrock model or inference profile in the selected region. The parent then completes their own profile in the app and chooses the child’s themes, bedtime, time zone, and email address.
