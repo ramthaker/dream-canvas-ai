@@ -45,3 +45,13 @@ After saving the profile, the parent can select “Send a test story now.” The
 ## Deployment notes
 
 The stack is deployed with AWS CDK using the `pulse-personal` profile. The frontend is hosted by AWS Amplify Hosting. The API is available through API Gateway, while the story and image assets remain in AWS-managed services. Before sharing the application, the SES sender and recipient should be verified when the account is still in the SES sandbox, and Bedrock model access should be enabled in the selected region.
+
+## Project links and challenge tag
+
+**Live app:** https://main.d2nitev0gdhlt2.amplifyapp.com/
+
+**Source repository:** https://github.com/ramthaker/dream-canvas-ai
+
+**Challenge tag:** #agents
+
+DreamCanvas is deployed using AWS Amplify Hosting, API Gateway, AWS Lambda, Amazon DynamoDB, Amazon S3, Amazon SES, Amazon Bedrock, and Amazon EventBridge. The live app demonstrates the reader experience, while the repository contains the CDK infrastructure, Lambda handlers, frontend, tests, architecture diagram, flow diagram, and this article.
