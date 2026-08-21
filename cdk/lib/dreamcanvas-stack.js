@@ -2,13 +2,13 @@ import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as events from "aws-cdk-lib/aws-events";
+import * as targets from "aws-cdk-lib/aws-events-targets";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as lambda from "aws-cdk-lib/aws-lambda";
-import { NodejsFunction, BundlingFormat } from "aws-cdk-lib/aws-lambda-nodejs";
+import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import * as apigwv2 from "aws-cdk-lib/aws-apigatewayv2";
 import * as integrations from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import * as s3 from "aws-cdk-lib/aws-s3";
-import * as scheduler from "aws-cdk-lib/aws_scheduler";
 
 export class DreamCanvasStack extends cdk.Stack {
   constructor(scope, id, props = {}) {
@@ -50,7 +50,7 @@ export class DreamCanvasStack extends cdk.Stack {
       runtime: lambda.Runtime.NODEJS_22_X,
       timeout: cdk.Duration.seconds(30),
       environment: common,
-      bundling: { format: BundlingFormat.ESM, minify: true },
+      bundling: { minify: true },
     });
     const storyFn = new NodejsFunction(this, "StoryFunction", {
       entry: "src/generate-story.mjs",
@@ -59,7 +59,7 @@ export class DreamCanvasStack extends cdk.Stack {
       timeout: cdk.Duration.seconds(120),
       memorySize: 1024,
       environment: common,
-      bundling: { format: BundlingFormat.ESM, minify: true },
+      bundling: { minify: true },
     });
     table.grantReadWriteData(apiFn);
     table.grantReadWriteData(storyFn);
@@ -90,24 +90,21 @@ export class DreamCanvasStack extends cdk.Stack {
         apiFn,
       ),
     });
-    const schedulerRole = new iam.Role(this, "SchedulerRole", {
-      assumedBy: new iam.ServicePrincipal("scheduler.amazonaws.com"),
-    });
-    schedulerRole.addToPolicy(
-      new iam.PolicyStatement({
-        actions: ["lambda:InvokeFunction"],
-        resources: [storyFn.functionArn],
+    new events.Rule(this, "BedtimeSchedule", {
+      schedule: events.Schedule.cron({
+        minute: "0",
+        hour: "20",
+        weekDay: "*",
+        month: "*",
+        year: "*",
       }),
-    );
-    new scheduler.CfnSchedule(this, "BedtimeSchedule", {
-      flexibleTimeWindow: { mode: "OFF" },
-      scheduleExpression: "cron(0 20 * * ? *)",
-      scheduleExpressionTimezone: "Europe/Stockholm",
-      target: {
-        arn: storyFn.functionArn,
-        roleArn: schedulerRole.roleArn,
-        input: JSON.stringify({ source: "EventBridge Scheduler" }),
-      },
+      targets: [
+        new targets.LambdaFunction(storyFn, {
+          event: events.RuleTargetInput.fromObject({
+            source: "EventBridge Scheduler",
+          }),
+        }),
+      ],
     });
     new cdk.CfnOutput(this, "ApiUrl", { value: api.apiEndpoint });
     new cdk.CfnOutput(this, "StoriesTableName", { value: table.tableName });
