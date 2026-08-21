@@ -1,0 +1,42 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: DreamCanvas autonomous bedtime story agent
+Globals:
+  Function:
+    Runtime: nodejs22.x
+    Timeout: 120
+    MemorySize: 1024
+    Environment:
+      Variables: { TABLE_NAME: !Ref StoriesTable, BUCKET_NAME: !Ref StoryImages, SES_FROM_EMAIL: !Ref SesFromEmail, APP_URL: !Ref AppUrl }
+Parameters:
+  SesFromEmail: { Type: String }
+  AppUrl: { Type: String, Default: http://localhost:3000 }
+Resources:
+  ApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../
+      Handler: src/api.handler
+      Policies: [{ DynamoDBCrudPolicy: { TableName: !Ref StoriesTable } }]
+      Events: { Api: { Type: HttpApi, Properties: { Path: /{proxy+}, Method: ANY } } }
+  StoryFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../
+      Handler: src/generate-story.handler
+      Policies:
+        - DynamoDBCrudPolicy: { TableName: !Ref StoriesTable }
+        - S3CrudPolicy: { BucketName: !Ref StoryImages }
+        - Statement: [{ Effect: Allow, Action: [bedrock:InvokeModel], Resource: '*' }, { Effect: Allow, Action: [ses:SendEmail], Resource: '*' }]
+      Events:
+        BedtimeSchedule:
+          Type: ScheduleV2
+          Properties: { ScheduleExpression: cron(0 20 * * ? *), ScheduleExpressionTimezone: Europe/Stockholm, Name: DreamCanvasBedtimeSchedule, Input: '{"source":"EventBridge Scheduler"}' }
+  StoriesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions: [{AttributeName: id, AttributeType: S},{AttributeName: kind, AttributeType: S},{AttributeName: createdAt, AttributeType: S}]
+      KeySchema: [{AttributeName: id, KeyType: HASH}]
+      GlobalSecondaryIndexes: [{IndexName: StoriesByDate,KeySchema: [{AttributeName: kind,KeyType: HASH},{AttributeName: createdAt,KeyType: RANGE}],Projection: {ProjectionType: ALL}}]
+  StoryImages: { Type: AWS::S3::Bucket }

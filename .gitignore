@@ -1,0 +1,6 @@
+.env
+.flowpass-profile/
+node_modules/
+playwright-report/
+test-results/
+*.log
