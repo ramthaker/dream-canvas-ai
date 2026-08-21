@@ -6,14 +6,22 @@ import { createInterface } from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
 import { fileURLToPath } from "node:url";
 
-const projectRoot = path.resolve(fileURLToPath(new URL("../", import.meta.url)));
+const projectRoot = path.resolve(
+  fileURLToPath(new URL("../", import.meta.url)),
+);
 
 loadDotEnv(path.join(projectRoot, ".env"));
 
 const config = {
   url: env("FLOWPASS_URL", "https://app.flowpass.co/guest/home"),
-  primaryText: env("FLOWPASS_PRIMARY_TEXT", "Co-working day pass|Coworking day pass|Co-working pass|Coworking pass"),
-  fallbackText: env("FLOWPASS_FALLBACK_TEXT", "Last-minute day pass|Last minute day pass"),
+  primaryText: env(
+    "FLOWPASS_PRIMARY_TEXT",
+    "Co-working day pass|Coworking day pass|Co-working pass|Coworking pass",
+  ),
+  fallbackText: env(
+    "FLOWPASS_FALLBACK_TEXT",
+    "Last-minute day pass|Last minute day pass",
+  ),
   fallbackPick: env("FLOWPASS_FALLBACK_PICK", "last").toLowerCase(),
   dateText: env("FLOWPASS_DATE_TEXT", ""),
   confirmBooking: truthy(env("FLOWPASS_CONFIRM_BOOKING", "false")),
@@ -23,14 +31,23 @@ const config = {
   nonInteractive: truthy(env("FLOWPASS_NONINTERACTIVE", "false")),
   headless: truthy(env("FLOWPASS_HEADLESS", "false")),
   slowMo: Number(env("FLOWPASS_SLOWMO_MS", "75")),
-  profileDir: resolveProjectPath(env("FLOWPASS_PROFILE_DIR", ".flowpass-profile"))
+  profileDir: resolveProjectPath(
+    env("FLOWPASS_PROFILE_DIR", ".flowpass-profile"),
+  ),
 };
 
-const successPattern = /booked|booking confirmed|confirmed|reserved|reservation confirmed|success/i;
+const successPattern =
+  /booked|booking confirmed|confirmed|reserved|reservation confirmed|success/i;
 const finalActionPattern = config.allowPaymentAction
   ? /book now|confirm|reserve now|complete|finish|pay|checkout/i
   : /book now|confirm|reserve now|complete|finish/i;
-const progressActionPatterns = [/continue/i, /next/i, /select/i, /choose/i, /add/i];
+const progressActionPatterns = [
+  /continue/i,
+  /next/i,
+  /select/i,
+  /choose/i,
+  /add/i,
+];
 const bookingActionPatterns = [/book/i, /reserve/i];
 
 class NoSlotError extends Error {
@@ -52,11 +69,11 @@ const { chromium } = await importPlaywright();
 const context = await chromium.launchPersistentContext(config.profileDir, {
   headless: config.headless,
   slowMo: Number.isFinite(config.slowMo) ? config.slowMo : 75,
-  viewport: { width: 1280, height: 900 }
+  viewport: { width: 1280, height: 900 },
 });
 
 try {
-  const page = context.pages()[0] ?? await context.newPage();
+  const page = context.pages()[0] ?? (await context.newPage());
   page.setDefaultTimeout(8000);
 
   console.log(`Opening ${config.url}`);
@@ -80,7 +97,9 @@ try {
       console.log("Visible action buttons/links now:");
       printActions(actions);
       console.log("");
-      console.log('Set FLOWPASS_CONFIRM_BOOKING="true" when you want the script to click booking confirmation buttons.');
+      console.log(
+        'Set FLOWPASS_CONFIRM_BOOKING="true" when you want the script to click booking confirmation buttons.',
+      );
       process.exitCode = 0;
     } else {
       await completeBooking(page);
@@ -110,7 +129,9 @@ async function selectDateIfConfigured(page) {
     await selectVisibleText(page, config.dateText, "first");
     await settle(page);
   } catch (error) {
-    throw new NoSlotError(`No matching date/day was visible for "${config.dateText}". ${error.message}`);
+    throw new NoSlotError(
+      `No matching date/day was visible for "${config.dateText}". ${error.message}`,
+    );
   }
 }
 
@@ -118,7 +139,9 @@ async function selectPreferredBooking(page) {
   const errors = [];
 
   try {
-    await selectVisibleText(page, config.primaryText, "first", { requireAvailable: config.onlyAvailable });
+    await selectVisibleText(page, config.primaryText, "first", {
+      requireAvailable: config.onlyAvailable,
+    });
     return { reason: `primary option "${config.primaryText}"` };
   } catch (primaryError) {
     errors.push(`primary: ${primaryError.message}`);
@@ -126,19 +149,30 @@ async function selectPreferredBooking(page) {
   }
 
   try {
-    await selectVisibleText(page, config.fallbackText, config.fallbackPick === "first" ? "first" : "last", {
-      requireAvailable: config.onlyAvailable
-    });
-    return { reason: `fallback option "${config.fallbackText}" (${config.fallbackPick})` };
+    await selectVisibleText(
+      page,
+      config.fallbackText,
+      config.fallbackPick === "first" ? "first" : "last",
+      {
+        requireAvailable: config.onlyAvailable,
+      },
+    );
+    return {
+      reason: `fallback option "${config.fallbackText}" (${config.fallbackPick})`,
+    };
   } catch (fallbackError) {
     errors.push(`fallback: ${fallbackError.message}`);
   }
 
-  throw new NoSlotError(`No available Flowpass slot found. ${errors.join(" ")}`);
+  throw new NoSlotError(
+    `No available Flowpass slot found. ${errors.join(" ")}`,
+  );
 }
 
 async function completeBooking(page) {
-  console.log("Automatic click mode enabled. Trying to complete the booking flow.");
+  console.log(
+    "Automatic click mode enabled. Trying to complete the booking flow.",
+  );
 
   for (let step = 1; step <= 8; step += 1) {
     await settle(page);
@@ -148,13 +182,19 @@ async function completeBooking(page) {
       return;
     }
 
-    const clickedProgress = await clickFirstAction(page, progressActionPatterns);
+    const clickedProgress = await clickFirstAction(
+      page,
+      progressActionPatterns,
+    );
     if (clickedProgress) {
       console.log(`Step ${step}: clicked "${clickedProgress}".`);
       continue;
     }
 
-    const clickedBooking = await clickFirstAction(page, [finalActionPattern, ...bookingActionPatterns]);
+    const clickedBooking = await clickFirstAction(page, [
+      finalActionPattern,
+      ...bookingActionPatterns,
+    ]);
     if (clickedBooking) {
       console.log(`Step ${step}: clicked "${clickedBooking}".`);
       continue;
@@ -169,20 +209,28 @@ async function completeBooking(page) {
   if (await hasVisibleText(page, successPattern, 1200)) {
     console.log("Booking appears to be confirmed.");
   } else {
-    console.log("Stopped after several booking steps. Please check the browser state manually.");
+    console.log(
+      "Stopped after several booking steps. Please check the browser state manually.",
+    );
   }
 }
 
 async function pauseForLoginIfNeeded(page) {
   const loginUrl = /\/guest\/welcome|login|signin|sign-in/i.test(page.url());
-  const loginTextVisible = await hasVisibleText(page, /log in|login|sign in|continue with|email/i, 1500);
+  const loginTextVisible = await hasVisibleText(
+    page,
+    /log in|login|sign in|continue with|email/i,
+    1500,
+  );
 
   if (!loginUrl && !loginTextVisible) {
     return;
   }
 
   if (config.nonInteractive || config.headless) {
-    throw new LoginRequiredError("Flowpass needs login. Run login.cmd once, finish login in the opened browser, then let the monitor continue.");
+    throw new LoginRequiredError(
+      "Flowpass needs login. Run login.cmd once, finish login in the opened browser, then let the monitor continue.",
+    );
   }
 
   console.log("");
@@ -205,13 +253,17 @@ async function selectVisibleText(page, rawText, pick, options = {}) {
     throw new Error(`No visible match for "${rawText}"`);
   }
 
-  const usable = options.requireAvailable ? candidates.filter((candidate) => candidate.available) : candidates;
+  const usable = options.requireAvailable
+    ? candidates.filter((candidate) => candidate.available)
+    : candidates;
   if (usable.length === 0) {
     const summary = candidates
       .slice(0, 4)
       .map((candidate) => `"${candidate.text}" (${candidate.status})`)
       .join("; ");
-    throw new Error(`Found matches for "${rawText}", but none looked available: ${summary}`);
+    throw new Error(
+      `Found matches for "${rawText}", but none looked available: ${summary}`,
+    );
   }
 
   const index = pick === "last" ? usable.length - 1 : 0;
@@ -263,7 +315,7 @@ async function markTextCandidates(page, pattern) {
       '[class*="card" i]',
       '[class*="tile" i]',
       '[class*="item" i]',
-      '[class*="option" i]'
+      '[class*="option" i]',
     ].join(",");
 
     const seen = new Set();
@@ -271,7 +323,12 @@ async function markTextCandidates(page, pattern) {
 
     for (const element of document.querySelectorAll("body *")) {
       const text = compactText(element.innerText || element.textContent || "");
-      if (!text || text.length > 500 || !matcher.test(text) || !isVisible(element)) {
+      if (
+        !text ||
+        text.length > 500 ||
+        !matcher.test(text) ||
+        !isVisible(element)
+      ) {
         continue;
       }
 
@@ -280,7 +337,9 @@ async function markTextCandidates(page, pattern) {
         continue;
       }
 
-      const targetText = compactText(target.innerText || target.textContent || text);
+      const targetText = compactText(
+        target.innerText || target.textContent || text,
+      );
       const disabled = isDisabled(target);
       const unavailable = looksUnavailable(targetText);
       const id = `text-${matches.length}-${Date.now()}`;
@@ -290,7 +349,11 @@ async function markTextCandidates(page, pattern) {
         id,
         text: targetText.slice(0, 160),
         available: !disabled && !unavailable,
-        status: disabled ? "disabled" : unavailable ? "unavailable" : "available"
+        status: disabled
+          ? "disabled"
+          : unavailable
+            ? "unavailable"
+            : "available",
       });
     }
 
@@ -307,11 +370,17 @@ async function markTextCandidates(page, pattern) {
     }
 
     function isDisabled(element) {
-      for (let current = element; current && current !== document.body; current = current.parentElement) {
-        if (current.disabled === true ||
+      for (
+        let current = element;
+        current && current !== document.body;
+        current = current.parentElement
+      ) {
+        if (
+          current.disabled === true ||
           current.getAttribute("aria-disabled") === "true" ||
           current.getAttribute("disabled") !== null ||
-          /\bdisabled\b/i.test(current.className || "")) {
+          /\bdisabled\b/i.test(current.className || "")
+        ) {
           return true;
         }
       }
@@ -322,15 +391,19 @@ async function markTextCandidates(page, pattern) {
     function isVisible(element) {
       const style = window.getComputedStyle(element);
       const rect = element.getBoundingClientRect();
-      return style.visibility !== "hidden" &&
+      return (
+        style.visibility !== "hidden" &&
         style.display !== "none" &&
         Number(style.opacity) !== 0 &&
         rect.width > 0 &&
-        rect.height > 0;
+        rect.height > 0
+      );
     }
 
     function looksUnavailable(value) {
-      return /sold out|fully booked|booked out|unavailable|not available|no availability|no slots|no spaces?|waitlist|closed|0\s+(left|spots?|places?)/i.test(value);
+      return /sold out|fully booked|booked out|unavailable|not available|no availability|no slots|no spaces?|waitlist|closed|0\s+(left|spots?|places?)/i.test(
+        value,
+      );
     }
   }, regexPayload(pattern));
 }
@@ -343,8 +416,14 @@ async function markActionCandidates(page, pattern) {
     const matches = [];
 
     for (const element of document.querySelectorAll(selector)) {
-      const text = compactText(element.innerText || element.textContent || element.getAttribute("aria-label") || "");
-      const disabled = element.disabled === true ||
+      const text = compactText(
+        element.innerText ||
+          element.textContent ||
+          element.getAttribute("aria-label") ||
+          "",
+      );
+      const disabled =
+        element.disabled === true ||
         element.getAttribute("aria-disabled") === "true" ||
         element.getAttribute("disabled") !== null;
 
@@ -372,11 +451,13 @@ async function markActionCandidates(page, pattern) {
     function isVisible(element) {
       const style = window.getComputedStyle(element);
       const rect = element.getBoundingClientRect();
-      return style.visibility !== "hidden" &&
+      return (
+        style.visibility !== "hidden" &&
         style.display !== "none" &&
         Number(style.opacity) !== 0 &&
         rect.width > 0 &&
-        rect.height > 0;
+        rect.height > 0
+      );
     }
   }, regexPayload(pattern));
 }
@@ -385,17 +466,32 @@ async function listVisibleActions(page) {
   return page.evaluate(() => {
     const actions = [];
 
-    for (const element of document.querySelectorAll('button,a,[role="button"],[role="link"]')) {
-      const text = (element.innerText || element.textContent || element.getAttribute("aria-label") || "")
+    for (const element of document.querySelectorAll(
+      'button,a,[role="button"],[role="link"]',
+    )) {
+      const text = (
+        element.innerText ||
+        element.textContent ||
+        element.getAttribute("aria-label") ||
+        ""
+      )
         .replace(/\s+/g, " ")
         .trim();
       const style = window.getComputedStyle(element);
       const rect = element.getBoundingClientRect();
-      const disabled = element.disabled === true ||
+      const disabled =
+        element.disabled === true ||
         element.getAttribute("aria-disabled") === "true" ||
         element.getAttribute("disabled") !== null;
 
-      if (text && !disabled && style.display !== "none" && style.visibility !== "hidden" && rect.width > 0 && rect.height > 0) {
+      if (
+        text &&
+        !disabled &&
+        style.display !== "none" &&
+        style.visibility !== "hidden" &&
+        rect.width > 0 &&
+        rect.height > 0
+      ) {
         actions.push(text.slice(0, 120));
       }
     }
@@ -406,7 +502,10 @@ async function listVisibleActions(page) {
 
 async function hasVisibleText(page, pattern, timeout) {
   try {
-    await page.getByText(pattern).first().waitFor({ state: "visible", timeout });
+    await page
+      .getByText(pattern)
+      .first()
+      .waitFor({ state: "visible", timeout });
     return true;
   } catch {
     return false;
@@ -434,10 +533,12 @@ function textPattern(value) {
     .split("|")
     .map((part) => part.trim())
     .filter(Boolean)
-    .map((part) => part
-      .split(/\s+/)
-      .map((token) => escapeRegExp(token).replace(/-/g, "[-\\s]?"))
-      .join("\\s+"));
+    .map((part) =>
+      part
+        .split(/\s+/)
+        .map((token) => escapeRegExp(token).replace(/-/g, "[-\\s]?"))
+        .join("\\s+"),
+    );
 
   if (alternatives.length === 0) {
     throw new Error("Text pattern cannot be empty.");
@@ -479,7 +580,10 @@ function loadDotEnv(envPath) {
     }
 
     const [key, ...rest] = trimmed.split("=");
-    const value = rest.join("=").trim().replace(/^["']|["']$/g, "");
+    const value = rest
+      .join("=")
+      .trim()
+      .replace(/^["']|["']$/g, "");
     if (key && process.env[key] === undefined) {
       process.env[key] = value;
     }

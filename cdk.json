@@ -1,0 +1,4 @@
+{
+  "app": "node cdk/bin/dreamcanvas.js",
+  "context": { "@aws-cdk/aws-lambda:recognizeLayerVersion": true }
+}
