@@ -21,7 +21,7 @@ npx cdk synth
 npx cdk deploy --parameters SesFromEmail=verified-sender@example.com --parameters AppUrl=https://your-amplify-domain.example.com
 ```
 
-Enable the Amazon Nova Lite and Nova Canvas Bedrock models in the deployment region before the first scheduled run. The default region is `eu-north-1`; set `CDK_DEFAULT_REGION` to change it.
+Enable the Amazon Nova Lite and Nova Canvas Bedrock models in the deployment region before the first scheduled run. The default region is `eu-north-1`; set `CDK_DEFAULT_REGION` to change it. Deployments for this project use the `pulse-personal` AWS profile.
 
 After deployment, copy the `ApiUrl` output into `public/app.js` as `window.DREAMCANVAS_API`, then deploy `public/` through Amplify Hosting. Invoke the story Lambda manually only for a demonstration; the production behavior is the scheduled 20:00 trigger.
 
