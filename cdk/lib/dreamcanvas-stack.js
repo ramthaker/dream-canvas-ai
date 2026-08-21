@@ -41,7 +41,7 @@ export class DreamCanvasStack extends cdk.Stack {
         type: "String",
         default: "http://localhost:3000",
       }).valueAsString,
-      TEXT_MODEL_ID: "amazon.nova-lite-v1:0",
+      TEXT_MODEL_ID: "us.amazon.nova-2-lite-v1:0",
       IMAGE_MODEL_ID: "amazon.nova-canvas-v1:0",
     };
     const apiFn = new NodejsFunction(this, "ApiFunction", {
@@ -63,6 +63,7 @@ export class DreamCanvasStack extends cdk.Stack {
     });
     table.grantReadWriteData(apiFn);
     table.grantReadWriteData(storyFn);
+    apiFn.addToRolePolicy(new iam.PolicyStatement({ actions: ["ses:SendEmail"], resources: ["*"] }));
     images.grantReadWrite(apiFn);
     images.grantReadWrite(storyFn);
     for (const fn of [apiFn, storyFn])
