@@ -23,3 +23,25 @@ The static frontend is hosted by AWS Amplify Hosting. It calls an Amazon API Gat
 ## What I learned
 
 The most important lesson was that an agent needs an operating rhythm, not only a prompt. Scheduling, local-time handling, persistence, safety checks, email delivery, retries, and a visible reader all matter. I also learned that a manual test path makes an autonomous system easier to trust: a parent can verify the complete experience now and still rely on the scheduled bedtime behavior later. DreamCanvas turns a cloud workflow into a small dependable family ritual.
+
+## Visual walkthrough
+
+The following diagram shows the deployed architecture:
+
+![DreamCanvas architecture](assets/dreamcanvas-architecture.svg)
+
+The end-to-end path is intentionally simple. A scheduled tick or a parent test request reaches the story workflow. The profile time is checked in the selected time zone. When the story is due, the worker asks Bedrock for the story, checks the output, creates or falls back to a safe illustration, stores both assets, and sends the email.
+
+![DreamCanvas generation flow](assets/dreamcanvas-flow.svg)
+
+This illustration represents the bedtime experience DreamCanvas is designed to create: a child, a friendly panda, and a dog sharing a quiet evening adventure beneath the stars. The generated story image is stored privately and shown to the reader with a temporary URL.
+
+![DreamCanvas bedtime story illustration](assets/dreamcanvas-bedtime-illustration.png)
+
+## Running a test story
+
+After saving the profile, the parent can select “Send a test story now.” The API invokes the same story Lambda used by the autonomous workflow, but marks the request as a manual test so it does not wait for the selected bedtime. This gives the builder a fast way to verify Bedrock access, image handling, DynamoDB persistence, S3 storage, and SES delivery. In production, the recurring scheduler remains responsible for the normal evening story.
+
+## Deployment notes
+
+The stack is deployed with AWS CDK using the `pulse-personal` profile. The frontend is hosted by AWS Amplify Hosting. The API is available through API Gateway, while the story and image assets remain in AWS-managed services. Before sharing the application, the SES sender and recipient should be verified when the account is still in the SES sandbox, and Bedrock model access should be enabled in the selected region.
