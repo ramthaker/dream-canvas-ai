@@ -8,7 +8,7 @@ DreamCanvas is an always-on illustrated bedtime-story agent for families. Every 
 
 `Web app -> API Gateway HTTP API -> API Lambda -> DynamoDB + presigned S3 URLs`
 
-The backend is provisioned with AWS CDK in `cdk/`. The static frontend in `public/` can be hosted with AWS Amplify Hosting.
+The backend is provisioned with AWS CDK in `cdk/`. The static frontend is hosted at https://d2nitev0gdhlt2.amplifyapp.com and its source is in `public/`.
 
 ## Deploy with CDK
 
